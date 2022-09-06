@@ -15,10 +15,18 @@
  */
 package com.example.android.architecture.blueprints.todoapp.tasks
 
+import android.annotation.TargetApi
 import android.app.Activity
+import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
+import android.graphics.drawable.Icon
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
@@ -38,11 +46,13 @@ class TasksActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private val TAG = "TasksActivity"
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.tasks_act)
         setupNavigationDrawer()
         setSupportActionBar(findViewById(R.id.toolbar))
+        createShortcut()
 
         // Logging for troubleshooting purposes
         logIntent(intent)
@@ -55,6 +65,70 @@ class TasksActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         findViewById<NavigationView>(R.id.nav_view)
             .setupWithNavController(navController)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun createShortcut() {
+        val shortcutManager = getSystemService(ShortcutManager::class.java)
+
+        if (shortcutManager!!.isRequestPinShortcutSupported) {
+            // Assumes there's already a shortcut with the ID "my-shortcut".
+            // The shortcut must be enabled.
+            val pinShortcutInfo = ShortcutInfo.Builder(applicationContext, "my-shortcut")
+                .setShortLabel(applicationContext.getString(R.string.open_destination_page_static)) //set short label
+                .setLongLabel(applicationContext.getString(R.string.open_destination_page_static)) //set long label
+                .setDisabledMessage(applicationContext.getString(R.string.access_disabled)) //Shortcut disabled message.
+                .setIcon(Icon.createWithResource(applicationContext,android.R.drawable.star_big_on)) //set icon
+                .setIntent(intent)
+                .build()
+
+            // Create the PendingIntent object only if your app needs to be notified
+            // that the user allowed the shortcut to be pinned. Note that, if the
+            // pinning operation fails, your app isn't notified. We assume here that the
+            // app has implemented a method called createShortcutResultIntent() that
+            // returns a broadcast intent.
+            val pinnedShortcutCallbackIntent = shortcutManager.createShortcutResultIntent(pinShortcutInfo)
+
+            // Configure the intent so that your app's broadcast receiver gets
+            // the callback successfully.For details, see PendingIntent.getBroadcast().
+            val successCallback = PendingIntent.getBroadcast(applicationContext, /* request code */ 0,
+                pinnedShortcutCallbackIntent, /* flags */ 0)
+
+            shortcutManager.requestPinShortcut(pinShortcutInfo,
+                successCallback.intentSender)
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.N_MR1)
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    fun onClickPinnedShortcutBtn(view: View?) {
+        val mShortcutManager: ShortcutManager = applicationContext.getSystemService(ShortcutManager::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            //check if device supports Pin Shortcut or not
+            if (mShortcutManager != null && mShortcutManager.isRequestPinShortcutSupported) {
+                // I am using the dynamic shortcut ID "open_destinationPage" to create pinned shortcut.  The added shortcut ID must be added.
+                val pinShortcutInfo =
+                    ShortcutInfo.Builder(applicationContext, "my-shortcut").build()
+
+                /* ***  Let's create the PendingIntent object for the app to be notified that the user allowed the shortcut to be pinned.
+                   The app will not notified if the pinning operation fails, here suppose if app has implemented a method called createShortcutResultIntent() that  will return a broadcast intent.
+  ****/
+                val pinnedShortcutCallbackIntent =
+                    mShortcutManager.createShortcutResultIntent(pinShortcutInfo)
+
+                // Configure the intent so that your app's broadcast receiver gets
+                // the callback successfully.
+                val successCallback = PendingIntent.getBroadcast(
+                    applicationContext, 101,
+                    pinnedShortcutCallbackIntent, 0)
+
+                //Ask the user to add the shortcut to home screen
+                mShortcutManager.requestPinShortcut(
+                    pinShortcutInfo,
+                    successCallback.intentSender
+                )
+            }
+        }
     }
 
     fun logIntent(intent: Intent) {

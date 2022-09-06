@@ -57,7 +57,7 @@ ext {
     // Sdk and tools
     // App Actions supported on minSdk 21 and above.
     minSdkVersion = 25
-    targetSdkVersion = 30
+    targetSdkVersion = 31
     compileSdkVersion = 31
 
     // App dependencies

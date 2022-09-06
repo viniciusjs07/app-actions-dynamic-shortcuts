@@ -37,15 +37,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <intent-filter tools:targetApi="m">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data
-                    android:host="todo.androidappactions.com"
-                    android:scheme="https" />
-            </intent-filter>
-
             <!-- When building your project, <nav-graph> element will be replaced with generated
             <intent-filter> elements for all deep links defined in the navigation graph. -->
             <nav-graph android:value="@navigation/nav_graph" />
